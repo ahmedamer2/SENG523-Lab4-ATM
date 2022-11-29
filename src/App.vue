@@ -1,5 +1,14 @@
-<script setup>
+<script>
 import ATM from "./components/ATM.vue";
+
+export default {
+  data() {
+    return {
+      message1: "Hello world",
+    };
+  },
+  components: { ATM },
+};
 </script>
 
 <template>
@@ -11,7 +20,7 @@ import ATM from "./components/ATM.vue";
       </div>
     </header>
     <main id="main">
-      <ATM></ATM>
+      <ATM v-bind:message="message1"></ATM>
     </main>
   </body>
 </template>

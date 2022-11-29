@@ -1,10 +1,14 @@
 <template>
   <div id="ATM">
-    <div id="screen">screen</div>
+    <div id="screen">
+      {{ buttonPressed }}
+      <span v-if="buttonIsOne">Button is 1</span>
+      <span v-else>Button is not 1</span>
+    </div>
     <div id="bottom">
       <div id="keypad" class="grid">
-        <div class="button">1</div>
-        <div class="button">2</div>
+        <div class="button" v-on:click="changeButton('1')">1</div>
+        <div class="button" @click="changeButton('2')">2</div>
         <div class="button">3</div>
         <div class="button cancel">Cancel</div>
         <div class="button">4</div>
@@ -22,7 +26,42 @@
   </div>
 </template>
 
-<script setup></script>
+<script>
+export default {
+  props: {
+    message: {
+      type: String,
+      default: null,
+    },
+  },
+  data() {
+    //independent vars
+    return {
+      buttonPressed: "",
+      account: {
+        name: "ahmed",
+      },
+    };
+  },
+  computed: {
+    buttonIsOne() {
+      return this.buttonPressed === "1";
+    },
+  }, // dependent vars
+  mounted() {}, // lifecycle hooks
+  methods: {
+    changeButton(num) {
+      this.buttonPressed = num;
+      setTimeout(() => {
+        console.log("hi");
+      }, 1000);
+    },
+    withdraw() {
+      this.acccount["name"] = "hefoiwejf";
+    },
+  }, // functions
+};
+</script>
 
 <style lang="less" scoped>
 #ATM {

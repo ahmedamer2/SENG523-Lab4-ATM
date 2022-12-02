@@ -46,7 +46,7 @@
         <div class="button enter" @click="keypadHandler('enter')">Enter</div>
         <div class="button zero" @click="keypadHandler('0')">0</div>
       </div>
-      <div id="cardScanner" @click="cardInserted = true">Card Scanner</div>
+      <div id="cardScanner" @click="welcome(true)">Card Scanner</div>
     </div>
   </div>
 </template>
@@ -84,6 +84,7 @@ export default {
       mainLoop: null,
       count: 0,
       seconds: 0,
+      buttonTimer: null,
     };
   },
   computed: {
@@ -110,42 +111,44 @@ export default {
       }
 
       this.count++;
-      if (this.count === 1000) {
+      if (this.count === 250) {
         // this val can be changed to make the clock faster
-        // the goal was to make it increment once a second
-        // but it is much slower than 1 second
+        // 300 counts seems to be approximately 1 sec
         this.seconds++;
         this.count = 0;
       }
     },
-    welcome() {
-      if (this.cardInserted) {
+    welcome(cardInserted) {
+      this.seconds = 0;
+      this.count = 0;
+      if (cardInserted) {
         this.processNumber = 2;
+        this.cardInserted = false;
       }
     },
     checkPin() {
-      this.processNumber = 2;
+      if (this.seconds > 3) {
+        this.processNumber = 1;
+        this.buttonPressed = "";
+        this.seconds = 0;
+      }
     },
     keypadHandler(val) {
       if (val === "cancel") {
         this.buttonPressed = "";
-        return;
-      }
-
-      if (val === "clear") {
+      } else if (val === "clear") {
         this.buttonPressed = this.buttonPressed.slice(
           0,
           this.buttonPressed.length - 1
         );
         return;
-      }
-
-      if (val === "enter") {
+      } else if (val === "enter") {
         this.enterPressed = true;
         return;
+      } else {
+        this.buttonPressed += val;
       }
-
-      this.buttonPressed += val;
+      this.seconds = 0;
     },
   }, // functions
 };

@@ -1,27 +1,52 @@
 <template>
   <div id="ATM">
     <div id="screen">
-      {{ buttonPressed }}
-      <span v-if="buttonIsOne">Button is 1</span>
-      <span v-else>Button is not 1</span>
+      <div v-if="processNumber == 1" class="state welcome">
+        Welcome Please Insert Your Card
+      </div>
+      <div v-if="processNumber == 2" class="state checkPin">
+        <div class="prompt">Please enter your 4 digit Pin Code</div>
+        <div class="pinInputs">
+          <div class="dash">
+            <span v-if="this.buttonPressed.length >= 1" class="asterisk">
+              *
+            </span>
+          </div>
+          <div class="dash">
+            <span v-if="this.buttonPressed.length >= 2" class="asterisk">
+              *
+            </span>
+          </div>
+          <div class="dash">
+            <span v-if="this.buttonPressed.length >= 3" class="asterisk">
+              *
+            </span>
+          </div>
+          <div class="dash">
+            <span v-if="this.buttonPressed.length >= 4" class="asterisk">
+              *
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="bottom">
       <div id="keypad" class="grid">
-        <div class="button" v-on:click="changeButton('1')">1</div>
-        <div class="button" @click="changeButton('2')">2</div>
-        <div class="button">3</div>
-        <div class="button cancel">Cancel</div>
-        <div class="button">4</div>
-        <div class="button">5</div>
-        <div class="button">6</div>
-        <div class="button clear">Clear</div>
-        <div class="button">7</div>
-        <div class="button">8</div>
-        <div class="button">9</div>
-        <div class="button enter">Enter</div>
-        <div class="button zero">0</div>
+        <div class="button" @click="keypadHandler('1')">1</div>
+        <div class="button" @click="keypadHandler('2')">2</div>
+        <div class="button" @click="keypadHandler('3')">3</div>
+        <div class="button cancel" @click="keypadHandler('cancel')">Cancel</div>
+        <div class="button" @click="keypadHandler('4')">4</div>
+        <div class="button" @click="keypadHandler('5')">5</div>
+        <div class="button" @click="keypadHandler('6')">6</div>
+        <div class="button clear" @click="keypadHandler('clear')">Clear</div>
+        <div class="button" @click="keypadHandler('7')">7</div>
+        <div class="button" @click="keypadHandler('8')">8</div>
+        <div class="button" @click="keypadHandler('9')">9</div>
+        <div class="button enter" @click="keypadHandler('enter')">Enter</div>
+        <div class="button zero" @click="keypadHandler('0')">0</div>
       </div>
-      <div id="cardScanner">cardScanner</div>
+      <div id="cardScanner" @click="cardInserted = true">Card Scanner</div>
     </div>
   </div>
 </template>
@@ -38,9 +63,27 @@ export default {
     //independent vars
     return {
       buttonPressed: "",
+      enterPressed: false,
       account: {
-        name: "ahmed",
+        name: "Jhon Doe",
+        pin: "1234",
+        balance: 2500,
       },
+      atm: {
+        balance: 2000,
+        bills: {
+          5: 0,
+          10: 0,
+          20: 0,
+          50: 0,
+          100: 0,
+        },
+      },
+      processNumber: 1,
+      cardInserted: false,
+      mainLoop: null,
+      count: 0,
+      seconds: 0,
     };
   },
   computed: {
@@ -48,16 +91,61 @@ export default {
       return this.buttonPressed === "1";
     },
   }, // dependent vars
-  mounted() {}, // lifecycle hooks
+  mounted() {
+    // this will start up the process when the page loads
+    this.mainLoop = setInterval(() => this.dispatcher(), 0); // runs the dispatcher every 10ms
+  },
+  unmounted() {
+    clearInterval(this.mainLoop);
+  },
   methods: {
-    changeButton(num) {
-      this.buttonPressed = num;
-      setTimeout(() => {
-        console.log("hi");
-      }, 1000);
+    dispatcher() {
+      switch (this.processNumber) {
+        case 1:
+          this.welcome();
+          break;
+        case 2:
+          this.checkPin();
+          break;
+      }
+
+      this.count++;
+      if (this.count === 1000) {
+        // this val can be changed to make the clock faster
+        // the goal was to make it increment once a second
+        // but it is much slower than 1 second
+        this.seconds++;
+        this.count = 0;
+      }
     },
-    withdraw() {
-      this.acccount["name"] = "hefoiwejf";
+    welcome() {
+      if (this.cardInserted) {
+        this.processNumber = 2;
+      }
+    },
+    checkPin() {
+      this.processNumber = 2;
+    },
+    keypadHandler(val) {
+      if (val === "cancel") {
+        this.buttonPressed = "";
+        return;
+      }
+
+      if (val === "clear") {
+        this.buttonPressed = this.buttonPressed.slice(
+          0,
+          this.buttonPressed.length - 1
+        );
+        return;
+      }
+
+      if (val === "enter") {
+        this.enterPressed = true;
+        return;
+      }
+
+      this.buttonPressed += val;
     },
   }, // functions
 };
@@ -78,6 +166,47 @@ export default {
     width: 95%;
     margin: 0 auto 2rem;
     padding: 1em;
+    background-color: #47a6ff;
+
+    .state {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .welcome {
+      font-family: "Barlow-Bold";
+      font-size: 3rem;
+    }
+
+    .checkPin {
+      font-family: "Barlow-Normal";
+      font-size: 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2em;
+
+      .prompt {
+        font-family: "Barlow-Bold";
+      }
+      .pinInputs {
+        display: flex;
+        gap: 1em;
+        .dash {
+          border-bottom: 1px solid black;
+          width: 1.5em;
+          text-align: center;
+
+          .asterisk {
+            font-family: "Barlow-Bold";
+            font-size: 3rem;
+          }
+        }
+      }
+    }
   }
 
   #bottom {
@@ -145,7 +274,11 @@ export default {
       outline: 1px solid black;
       height: 2rem;
       margin: auto 0;
-      padding: 1em;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.2rem;
+      font-family: "Barlow-Bold";
+      cursor: pointer;
     }
   }
 }

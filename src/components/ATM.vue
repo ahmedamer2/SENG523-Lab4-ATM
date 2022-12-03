@@ -29,6 +29,9 @@
           </div>
         </div>
       </div>
+      <div v-if="(processNumber == 3)">
+
+      </div>
     </div>
     <div id="bottom">
       <div id="keypad" class="grid">
@@ -68,6 +71,7 @@ export default {
         name: "Jhon Doe",
         pin: "1234",
         balance: 2500,
+        currentWithdrawAmount: 0
       },
       atm: {
         balance: 2000,
@@ -78,6 +82,7 @@ export default {
           50: 0,
           100: 0,
         },
+        maxAllowableWithdraw: 1000
       },
       processNumber: 1,
       cardInserted: false,
@@ -85,6 +90,7 @@ export default {
       count: 0,
       seconds: 0,
       buttonTimer: null,
+      pinTrialsRemaining: 3
     };
   },
   computed: {
@@ -132,6 +138,38 @@ export default {
         this.buttonPressed = "";
         this.seconds = 0;
       }
+      else if (this.enterPressed) {
+        if (this.buttonPressed === this.account.pin) {
+          this.processNumber = 3;
+        }
+        else if (this.pinTrialsRemaining > 0) {
+          this.buttonPressed = "";
+          this.pinTrialsRemaining--;
+          console.log("HELLO");
+          this.seconds = 0;
+        }
+        else {
+          this.processNumber = 7;
+          this.pinTrialsRemaining = 3;
+          this.seconds = 0;
+        }
+        this.enterPressed = false;
+      }
+    },
+    inputWithdrawAmount() {
+      if (this.seconds > 3) {
+        this.processNumber = 1;
+        this.buttonPressed = "";
+        this.seconds = 0;
+      }
+      else if (this.enterPressed) {
+        this.enterPressed = false;
+        const amountToWithdraw = parseInt(this.buttonPressed);
+        if (amountToWithdraw >= 5 && amountToWithdraw <= this.atm.maxAllowableWithdraw) {
+          this.account.currentWithdrawAmount = amountToWithdraw;
+          this.processNumber = 4;
+        }
+      }
     },
     keypadHandler(val) {
       if (val === "cancel") {
@@ -152,6 +190,9 @@ export default {
     },
     clearKeypadInput() {
       this.keypad.input = "";
+    },
+    showErrorMessage(message, enterCallback, cancelCallback) {
+      
     }
   }, // functions
 };

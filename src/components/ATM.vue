@@ -1,25 +1,23 @@
 <template>
   <div id="ATM">
     <div id="screen">
-      {{ buttonPressed }}
-      <span v-if="buttonIsOne">Button is 1</span>
-      <span v-else>Button is not 1</span>
+      {{ displayMessage }}
     </div>
     <div id="bottom">
       <div id="keypad" class="grid">
-        <div class="button" v-on:click="changeButton('1')">1</div>
-        <div class="button" @click="changeButton('2')">2</div>
-        <div class="button">3</div>
-        <div class="button cancel">Cancel</div>
-        <div class="button">4</div>
-        <div class="button">5</div>
-        <div class="button">6</div>
-        <div class="button clear">Clear</div>
-        <div class="button">7</div>
-        <div class="button">8</div>
-        <div class="button">9</div>
-        <div class="button enter">Enter</div>
-        <div class="button zero">0</div>
+        <div class="button" @click="numBtnHandler('1')">1</div>
+        <div class="button" @click="numBtnHandler('2')">2</div>
+        <div class="button" @click="numBtnHandler('3')">3</div>
+        <div class="button cancel" @click="cancelBtnHandler()">Cancel</div>
+        <div class="button" @click="numBtnHandler('4')">4</div>
+        <div class="button" @click="numBtnHandler('5')">5</div>
+        <div class="button" @click="numBtnHandler('6')">6</div>
+        <div class="button clear" @click="clearBtnHandler()">Clear</div>
+        <div class="button" @click="numBtnHandler('7')">7</div>
+        <div class="button" @click="numBtnHandler('8')">8</div>
+        <div class="button" @click="numBtnHandler('9')">9</div>
+        <div class="button enter" @click="enterBtnHandler()">Enter</div>
+        <div class="button zero" @click="numBtnHandler('0')">0</div>
       </div>
       <div id="cardScanner">cardScanner</div>
     </div>
@@ -40,7 +38,26 @@ export default {
       buttonPressed: "",
       account: {
         name: "ahmed",
+        pin: "1234",
+        maxAllowableWithdraw: 1234,
+        currentAmountToWithdraw: 0
       },
+      displayMessage: "",
+      pmNum: 1,
+      timeout: 0,
+      statuses: {
+        monitorStatus: true,
+        keypadStatus: true,
+        cardReaderStatus: true,
+        pinTrialRemaining: 3,
+        entering: false
+      },
+      data: {
+        pin: ""
+      },
+      keypad: {
+        input: ""
+      }
     };
   },
   computed: {
@@ -48,17 +65,72 @@ export default {
       return this.buttonPressed === "1";
     },
   }, // dependent vars
-  mounted() {}, // lifecycle hooks
+  mounted() {
+    setInterval(() => {
+      if (this.timeout > 0) {
+        this.timeout -= 100;
+        if (this.timeout === 0) {
+          this.display("Input timed out. Please try again");
+          setTimeout(() => this.pmNum = 1, 3000);
+        }
+      }
+      else {
+        switch(this.pmNum) {
+          case 1: // welcome
+            this.welcome();
+            break;
+          case 2:
+
+        }
+      }
+    }, 100);
+  }, // lifecycle hooks
   methods: {
-    changeButton(num) {
-      this.buttonPressed = num;
-      setTimeout(() => {
-        console.log("hi");
-      }, 1000);
+    // --------------- PM 1: Welcome ---------------
+    welcome() {
+      this.display("Welcome");
     },
-    withdraw() {
-      this.acccount["name"] = "hefoiwejf";
+    // --------------- PM 2: Check PIN ---------------
+    checkPIN() {
+      if (this.pinTrialRemaining > 0) {
+        if (this.pin !== this.account.pin) {
+          this.display("Wrong PIN. Do you want to try again?");
+          this.statuses.pinTrialRemaining--;
+        }
+        else {
+          this.pmNum = 3;
+        }
+      }
+      else {
+        this.display("Invalid PIN");
+        this.pmNum = 7;
+      }
     },
+    // --------------- PM 3: Withdraw Amount ---------------
+    inputWithdrawAmount() {
+
+    },
+    // --------------- Helper Functions ---------------
+    display(msg) {
+      this.displayMessage = msg;
+    },
+    numBtnHandler(num) {
+      this.pmNum = 0;
+      this.keypad.input += num;
+      this.display(this.keypad.input);
+    },
+    enterBtnHandler() {
+
+    },
+    cancelBtnHandler() {
+
+    },
+    clearBtnHandler() {
+      this.clearKeypadInput();
+    },
+    clearKeypadInput() {
+      this.keypad.input = "";
+    }
   }, // functions
 };
 </script>

@@ -1,13 +1,13 @@
 <template>
   <div id="ATM">
     <div id="screen">
-      <div v-if="processNumber == -1" class="state error">
+      <div v-if="processNumber === -1" class="state error">
         <div class="prompt">{{ errorMessage }}</div>
       </div>
-      <div v-if="processNumber == 1" class="state welcome">
+      <div v-if="processNumber === 1" class="state welcome">
         Welcome Please Insert Your Card
       </div>
-      <div v-if="processNumber == 2" class="state checkPin">
+      <div v-if="processNumber === 2" class="state checkPin">
         <div class="prompt">Please enter your 4 digit Pin Code</div>
         <div class="pinInputs">
           <div class="dash">
@@ -32,7 +32,7 @@
           </div>
         </div>
       </div>
-      <div v-if="processNumber == 3" class="state inputWithdrawAmount">
+      <div v-if="processNumber === 3" class="state inputWithdrawAmount">
         <div class="prompt">Please enter the amount to withdraw</div>
         <div class="pinInputs">
           <div class="dash">
@@ -57,8 +57,11 @@
           </div>
         </div>
       </div>
-      <div v-if="processNumber == 7" class="state ejectCard">
-        <span>{{ ejectCardMessage }}</span>
+      <div v-if="processNumber === 6" class="state">
+        <span class="prompt">{{ billDisburseMessage }}</span>
+      </div>
+      <div v-if="processNumber === 7" class="state ejectCard">
+        <span class="prompt">{{ ejectCardMessage }}</span>
       </div>
     </div>
     <div id="bottom">
@@ -77,7 +80,14 @@
         <div class="button enter" @click="keypadHandler('enter')">Enter</div>
         <div class="button zero" @click="keypadHandler('0')">0</div>
       </div>
-      <div id="cardScanner" @click="welcome(true)">Card Scanner</div>
+      <div
+        v-if="processNumber === 1"
+        class="cardScanner"
+        @click="welcome(true)"
+      >
+        Card Scanner
+      </div>
+      <div v-else class="cardScanner" @click="ejectCard()">Eject Card</div>
     </div>
   </div>
 </template>
@@ -103,14 +113,7 @@ export default {
         currentWithdrawAmount: 0,
       },
       atm: {
-        balance: 2000,
-        bills: {
-          5: 0,
-          10: 0,
-          20: 0,
-          50: 0,
-          100: 0,
-        },
+        balance: 10000,
         maxAllowableWithdraw: 5000,
       },
       processNumber: 1,
@@ -130,6 +133,7 @@ export default {
       errorEnterCallback: null,
       errorCancelCallback: null,
       ejectCardMessage: "",
+      billDisburseMessage: "",
     };
   },
   computed: {
@@ -165,6 +169,9 @@ export default {
         case 5:
           this.verifyBillAvailability();
           break;
+        case 6:
+          this.disburseBills();
+          break;
         case 7:
           this.ejectCard();
           break;
@@ -191,6 +198,8 @@ export default {
       if (cardInserted) {
         this.processNumber = 2;
         this.cardInserted = false;
+        this.seconds = 0;
+        this.count = 0;
       }
     },
     checkPin() {
@@ -199,25 +208,31 @@ export default {
         this.processNumber = 7;
         this.buttonPressed = "";
         this.seconds = 0;
+        this.count = 0;
       } else if (this.enterPressed) {
         if (this.buttonPressed === this.account.pin) {
           this.processNumber = 3;
           this.validPIN = true;
+          this.seconds = 0;
+          this.count = 0;
         } else if (this.pinTrialsRemaining > 1) {
           this.pinTrialsRemaining--;
           this.seconds = 0;
+          this.count = 0;
           this.showErrorMessage(
             "Wrong PIN. Would you like to try again?",
             () => {
               this.processNumber = 2;
               this.enterPressed = false;
               this.seconds = 0;
+              this.count = 0;
             },
             () => {
               this.processNumber = 7;
               this.buttonPressed = "";
               this.validPIN = false;
               this.seconds = 0;
+              this.count = 0;
             }
           );
         } else {
@@ -225,6 +240,7 @@ export default {
           this.processNumber = 7;
           this.pinTrialsRemaining = 3;
           this.seconds = 0;
+          this.count = 0;
         }
         this.buttonPressed = "";
         this.enterPressed = false;
@@ -235,6 +251,7 @@ export default {
         this.processNumber = 1;
         this.buttonPressed = "";
         this.seconds = 0;
+        this.count = 0;
       } else if (this.enterPressed) {
         this.enterPressed = false;
         const amountToWithdraw = parseInt(this.buttonPressed);
@@ -245,6 +262,8 @@ export default {
           this.account.currentWithdrawAmount = amountToWithdraw;
           this.validWithdrawAmount = true;
           this.processNumber = 4;
+          this.seconds = 0;
+          this.count = 0;
         } else {
           this.validWithdrawAmount = false;
           this.buttonPressed = "";
@@ -253,11 +272,13 @@ export default {
             () => {
               this.enterPressed = false;
               this.seconds = 0;
+              this.count = 0;
               this.processNumber = 3;
             },
             () => {
               this.serviceCancelled = true;
               this.seconds = 0;
+              this.count = 0;
               this.processNumber = 7;
             }
           );
@@ -268,6 +289,8 @@ export default {
       if (this.account.currentWithdrawAmount <= this.account.balance) {
         this.validBalance = true;
         this.processNumber = 5;
+        this.seconds = 0;
+        this.count = 0;
       } else {
         this.validBalance = false;
         this.showErrorMessage(
@@ -275,6 +298,7 @@ export default {
           () => {
             this.enterPressed = false;
             this.seconds = 0;
+            this.count = 0;
             this.buttonPressed = "";
             this.processNumber = 3;
           },
@@ -282,6 +306,7 @@ export default {
             this.validBalance = false;
             this.serviceCancelled = true;
             this.seconds = 0;
+            this.count = 0;
             this.processNumber = 7;
           }
         );
@@ -291,26 +316,45 @@ export default {
       if (this.account.currentWithdrawAmount <= this.atm.balance) {
         this.billsAvailable = true;
         this.processNumber = 6;
+        this.seconds = 0;
+        this.count = 0;
       } else {
         this.showErrorMessage(
           "No sufficient bills available in this machine. Try a different amount?",
           () => {
             this.enterPressed = false;
             this.seconds = 0;
+            this.count = 0;
             this.processNumber = 3;
           },
           () => {
             this.serviceCancelled = true;
             this.billsAvailable = false;
             this.seconds = 0;
+            this.count = 0;
             this.processNumber = 7;
           }
         );
       }
     },
+    disburseBills() {
+      if (this.seconds > 3) {
+        this.billDisburseMessage = "";
+        this.atm.balance -= this.account.currentWithdrawAmount;
+        this.account.balance -= this.account.currentWithdrawAmount;
+        this.account.currentWithdrawAmount = 0;
+        this.processNumber = 7;
+        this.count = 0;
+        this.seconds = 0;
+      } else {
+        this.billDisburseMessage = `Disbursed ${this.account.currentWithdrawAmount}`;
+      }
+    },
     ejectCard() {
       if (this.seconds > 3) {
         this.processNumber = 1;
+        this.seconds = 0;
+        this.count = 0;
       }
       if (this.serviceTimedout) {
         this.ejectCardMessage = "Service timed out.";
@@ -318,6 +362,8 @@ export default {
         this.ejectCardMessage = "Service cancelled.";
       } else if (!this.validPIN) {
         this.ejectCardMessage = "Invalid PIN.";
+      } else {
+        this.ejectCardMessage = "Ejecting card";
       }
     },
     keypadHandler(val) {
@@ -337,6 +383,7 @@ export default {
         this.buttonPressed += val;
       }
       this.seconds = 0;
+      this.count = 0;
     },
     showErrorMessage(message, enterCallback, cancelCallback) {
       this.errorMessage = message;
@@ -344,11 +391,13 @@ export default {
       this.errorCancelCallback = cancelCallback;
       this.processNumber = -1;
       this.seconds = 0;
+      this.count = 0;
     },
     handleErrorMessage() {
       if (this.seconds > 3) {
         this.serviceTimedout = true;
         this.seconds = 0;
+        this.count = 0;
         this.processNumber = 7;
       } else if (this.enterPressed) {
         this.errorEnterCallback();
@@ -360,7 +409,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 #ATM {
   height: 85%;
   width: 65rem;
@@ -383,6 +432,10 @@ export default {
       height: 100%;
       justify-content: center;
       align-items: center;
+      .prompt {
+        font-family: "Barlow-Bold";
+        font-size: 3rem;
+      }
     }
 
     .welcome {
@@ -399,9 +452,6 @@ export default {
       justify-content: center;
       gap: 2em;
 
-      .prompt {
-        font-family: "Barlow-Bold";
-      }
       .pinInputs {
         display: flex;
         gap: 1em;
@@ -479,7 +529,7 @@ export default {
       }
     }
 
-    #cardScanner {
+    .cardScanner {
       width: 30%;
       outline: 1px solid black;
       height: 2rem;
